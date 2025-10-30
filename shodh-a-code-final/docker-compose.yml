@@ -1,0 +1,42 @@
+
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: shodh
+      POSTGRES_PASSWORD: shodhpass
+      POSTGRES_DB: shodha
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shodha
+      SPRING_DATASOURCE_USERNAME: shodh
+      SPRING_DATASOURCE_PASSWORD: shodhpass
+      JUDGE_IMAGE: shodh-judge:latest
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: on-failure
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8080/api
+    restart: on-failure
+
+volumes:
+  pgdata:
